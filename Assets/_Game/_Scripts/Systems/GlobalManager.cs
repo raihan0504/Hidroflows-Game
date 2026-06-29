@@ -4,9 +4,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class GameManager : MonoBehaviour
+public class GlobalManager : MonoBehaviour
 {
-    public static GameManager Instance;
+    public static GlobalManager Instance;
 
     [Header("Loading UI")]
     [SerializeField] private GameObject loadingScreen;

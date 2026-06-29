@@ -21,6 +21,9 @@ public class PlayerController : MonoBehaviour
     [Header("Jumping Settings")]
     [SerializeField] float jumpStrength = 5f;
 
+    [Header("Interaction")]
+    [SerializeField] float interactDistance = 2f;
+
     private Vector2 _moveInput;
     private Vector3 _moveDirection;
     private float _verticalVelocity;
@@ -28,6 +31,7 @@ public class PlayerController : MonoBehaviour
     private bool _hasTarget;
     private string currentState;
     private bool _isJumpingPipe;
+    private Interact _targetInteract;
 
     private void Awake()
     {
@@ -43,6 +47,8 @@ public class PlayerController : MonoBehaviour
         HandleRotation();
         HandleAnimation();
         HandleTouchMovement();
+
+        HandleInteract();
     }
 
     private void HandleRotation()
@@ -111,6 +117,20 @@ public class PlayerController : MonoBehaviour
 
             if (Physics.Raycast(ray, out RaycastHit hit))
             {
+                Interact interact = hit.collider.GetComponent<Interact>();
+                
+                if (interact != null)
+                {
+                    _targetInteract = interact;
+                    _targetPosition = interact.transform.position;
+                    _hasTarget = true;
+
+                    clickIndicator.position = interact.transform.position;
+                    clickIndicator.gameObject.SetActive(true);
+
+                    return;
+                }
+
                 _targetPosition = hit.point;
                 _hasTarget = true;
 
@@ -141,6 +161,26 @@ public class PlayerController : MonoBehaviour
                 _targetPosition - transform.position;
 
             direction.y = 0f;
+
+            if (_targetInteract != null)
+            {
+                float distance = Vector3.Distance(
+                    transform.position,
+                    _targetInteract.transform.position
+                    );
+
+                if (distance <= interactDistance)
+                {
+                    _targetInteract.CallInteract(this);
+
+                    _targetInteract = null;
+                    _hasTarget = false;
+                    _moveDirection = Vector3.zero;
+
+                    clickIndicator.gameObject.SetActive(false);
+                    return;
+                }
+            }
 
             if (direction.magnitude < 0.1f)
             {
@@ -227,4 +267,26 @@ public class PlayerController : MonoBehaviour
         anim.CrossFade(newState, transitionDuration, 0);
     }
     #endregion
+
+
+    private void HandleInteract()
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            Ray ray = new Ray(
+                transform.position + Vector3.up,
+                transform.forward
+                );
+
+            if (Physics.Raycast(ray, out RaycastHit hit, interactDistance))
+            {
+                Interact interact = hit.collider.GetComponent<Interact>();
+
+                if (interact != null)
+                {
+                    interact.CallInteract(this);
+                }
+            }
+        }
+    }
 }

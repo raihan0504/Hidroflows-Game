@@ -16,7 +16,7 @@ public class MainMenuManager : MonoBehaviour
 
     public void StartGame()
     {
-        GameManager.Instance.LoadGame();
+        GlobalManager.Instance.LoadGame();
     }
     #endregion
 
