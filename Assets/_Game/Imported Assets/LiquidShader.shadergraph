@@ -327,7 +327,7 @@
                 "m_Node": {
                     "m_Id": "7528eaa0ec7c4ca98998e48679ecdcef"
                 },
-                "m_SlotId": 1
+                "m_SlotId": 2
             },
             "m_InputSlot": {
                 "m_Node": {
@@ -1865,7 +1865,7 @@
     "m_CustomColors": {
         "m_SerializableColors": []
     },
-    "m_Space": 2,
+    "m_Space": 0,
     "m_PositionSource": 0
 }
 
@@ -3097,7 +3097,7 @@
     "m_ShaderOutputName": "OutMinMax",
     "m_StageCapability": 3,
     "m_Value": {
-        "x": -2.299999952316284,
+        "x": -5.0,
         "y": 1.0
     },
     "m_DefaultValue": {
@@ -3113,8 +3113,8 @@
     "m_ObjectId": "c31cfb2170e2428eb8f2e91ac10d2447",
     "m_Title": "Fill",
     "m_Position": {
-        "x": 494.0,
-        "y": 394.0
+        "x": 493.99993896484377,
+        "y": 393.9999694824219
     }
 }
 

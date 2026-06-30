@@ -1166,7 +1166,7 @@ MonoBehaviour:
   nodeA: {fileID: 979031646}
   nodeB: {fileID: 1775756883}
   weight: 9
-  pipeVisual: {fileID: 0}
+  pipeVisual: {fileID: 127155025}
 --- !u!1001 &129870286
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11125,11 +11125,21 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7348098590891482941, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
+      propertyPath: edge
+      value: 
+      objectReference: {fileID: 1935853453}
     - target: {fileID: 7955927475527889797, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
       propertyPath: m_Name
       value: Valve (10)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 8251332862035963409, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
+      propertyPath: edge
+      value: 
+      objectReference: {fileID: 1935853453}
+    m_RemovedComponents:
+    - {fileID: 6392704016419296975, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
+    - {fileID: 8251332862035963409, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -13098,16 +13108,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Valve (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 8251332862035963409, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
+      propertyPath: edge
+      value: 
+      objectReference: {fileID: 127155026}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7955927475527889797, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1705735580}
-    - targetCorrespondingSourceObject: {fileID: 7955927475527889797, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1705735579}
     - targetCorrespondingSourceObject: {fileID: 7955927475527889797, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1705735581}
@@ -13117,31 +13125,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2762966414781442438, guid: 699fd9f8e4bdbff4ca48d5abbb0991e4, type: 3}
   m_PrefabInstance: {fileID: 1705735576}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1705735579
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 736178744}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e3d52ca03c329c043ab6a6c70a3ede88, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  edge: {fileID: 127155026}
---- !u!114 &1705735580
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 736178744}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb2d942b2c0a5b548b8560372cfb89df, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!65 &1705735581
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -15038,7 +15021,7 @@ MonoBehaviour:
   primAlgorithm: {fileID: 1113377978}
   waterTank: {fileID: 380903626}
   startNode: {fileID: 979031646}
-  waterFlowDuration: 1
+  waterFlowDuration: 2
 --- !u!1 &2054129782
 GameObject:
   m_ObjectHideFlags: 0
