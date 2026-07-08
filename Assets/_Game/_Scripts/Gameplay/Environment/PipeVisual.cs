@@ -1,45 +1,72 @@
 using System.Collections;
 using UnityEngine;
 
+[RequireComponent(typeof(Renderer))]
 public class PipeVisual : MonoBehaviour
 {
-    private Renderer _rend;
-    private MaterialPropertyBlock _propBlock;
+    private Renderer rend;
+    private MaterialPropertyBlock propertyBlock;
 
     private static readonly int FillID = Shader.PropertyToID("_Fill");
 
+    private Coroutine fillCoroutine;
+
     private void Awake()
     {
-        _rend = GetComponent<Renderer>();
-        _propBlock = new MaterialPropertyBlock();
+        rend = GetComponent<Renderer>();
+        propertyBlock = new MaterialPropertyBlock();
     }
 
+    /// <summary>
+    /// Mengubah nilai Fill pada shader.
+    /// </summary>
     public void SetFill(float fill)
     {
-        _rend.GetPropertyBlock(_propBlock);
-        _propBlock.SetFloat(FillID, fill);
-        _rend.SetPropertyBlock(_propBlock);
+        rend.GetPropertyBlock(propertyBlock);
+        propertyBlock.SetFloat(FillID, Mathf.Clamp01(fill));
+        rend.SetPropertyBlock(propertyBlock);
     }
 
-    public void FIllPipe(float duration)
+    /// <summary>
+    /// Memulai animasi pengisian air.
+    /// </summary>
+    public void FillPipe()
     {
-        StartCoroutine(FillRotine(duration));
+        if (fillCoroutine != null)
+            StopCoroutine(fillCoroutine);
+
+        fillCoroutine = StartCoroutine(FillRoutine());
     }
 
-    IEnumerator FillRotine(float duration)
+    private IEnumerator FillRoutine()
     {
-        float timer = 0f;
-         
-        while (timer < duration)
+        float fill = 0f;
+
+        while (fill < 1f)
         {
-            timer += Time.deltaTime;
-            
-            float fill = Mathf.Lerp(0f, 1f, timer / duration);
+            fill += GameManager.Instance.PipeFillSpeed * Time.deltaTime;
 
             SetFill(fill);
+
             yield return null;
         }
 
         SetFill(1f);
+
+        fillCoroutine = null;
+    }
+
+    /// <summary>
+    /// Mengosongkan kembali pipa.
+    /// </summary>
+    public void ResetPipe()
+    {
+        if (fillCoroutine != null)
+        {
+            StopCoroutine(fillCoroutine);
+            fillCoroutine = null;
+        }
+
+        SetFill(0f);
     }
 }

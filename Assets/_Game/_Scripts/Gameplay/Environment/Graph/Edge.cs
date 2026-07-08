@@ -32,13 +32,13 @@ public class Edge : MonoBehaviour
         return null;
     }
 
-    public void FlowWater(float duration)
+    public void FlowWater()
     {
         Debug.Log("FlowWater Dipanggil");
 
         if (pipeVisual != null)
         {
-            pipeVisual.FIllPipe(duration);
+            pipeVisual.FillPipe();
             HasWater = true;
         }
         else

@@ -25,6 +25,8 @@ public class PrimAlgorithm : MonoBehaviour
         Reset();
 
         startNode.IsVisited = true;
+        startNode.Activate();
+
         visitedNodes.Add(startNode);
 
         UpdateCandidates();
@@ -75,6 +77,7 @@ public class PrimAlgorithm : MonoBehaviour
             : edge.NodeA;
 
         newNode.IsVisited = true;
+        newNode.Activate();
 
         visitedNodes.Add(newNode);
         minimumSpanningTree.Add(edge);

@@ -4,10 +4,12 @@ using UnityEngine;
 public class Valve : MonoBehaviour
 {
     [SerializeField] private Edge edge;
+    [SerializeField] private Node ownerNode;
 
     private Interact interact;
 
     public Edge Edge => edge;
+    public Node OwnerNode => ownerNode;
 
     private void Awake()
     {
@@ -37,6 +39,24 @@ public class Valve : MonoBehaviour
         if (edge == null)
         {
             Debug.LogError("Edge belum di-assign pada Valve");
+            return;
+        }
+
+        if (!ownerNode.IsActive)
+        {
+            Debug.Log("Node ini belum dialiri air");
+            return;
+        }
+
+        if (!edge.NodeA.IsActive && !edge.NodeB.IsActive)
+        {
+            Debug.Log("Valve belum aktif.");
+            return;
+        }
+
+        if (edge.HasWater)
+        {
+            Debug.Log("Edge telah di aliri air");
             return;
         }
 

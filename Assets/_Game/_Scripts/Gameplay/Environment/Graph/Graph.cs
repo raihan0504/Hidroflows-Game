@@ -32,7 +32,7 @@ public class Graph : MonoBehaviour
     {
         foreach (Node node in nodes)
         {
-            node.IsVisited = false;
+            node.ResetNode();
         }
 
         foreach (Edge edge in edges)
