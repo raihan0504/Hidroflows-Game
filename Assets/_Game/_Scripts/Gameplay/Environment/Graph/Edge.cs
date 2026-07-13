@@ -32,18 +32,26 @@ public class Edge : MonoBehaviour
         return null;
     }
 
-    public void FlowWater()
+    public void FlowWater(Node ownerNode)
     {
-        Debug.Log("FlowWater Dipanggil");
+        if (HasWater) return;
 
-        if (pipeVisual != null)
+        // ownerNode must be one of the connected nodes
+        if (ownerNode != nodeA && ownerNode != nodeB)
         {
-            pipeVisual.FillPipe();
-            HasWater = true;
+            Debug.LogError("FlowWater called with a node that does not belong to this edge.");
+            return;
         }
-        else
-        {
-            Debug.LogError("PipeVisual NULL");
-        }
+
+        // Use the explicit owner node to determine flow direction instead of inferring
+        Node fromNode = ownerNode;
+
+        pipeVisual.SetDirection(fromNode == nodeA ? 0 : 1);
+
+        pipeVisual.FillPipe();
+
+        GetOtherNode(fromNode).Activate();
+
+        HasWater = true;
     }
 }

@@ -7,18 +7,21 @@ public class GameManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private PrimAlgorithm primAlgorithm;
     [SerializeField] private WaterTank waterTank;
+    [SerializeField] private Graph graph;
 
     [Header("Level")]
     [SerializeField] private Node startNode;
 
     [Header("Visual")]
-    [SerializeField] private float waterFlowDuration = 1f;
-    [SerializeField] private float pipeFillSpeed = 0.5f;
+    [SerializeField] private float pipeLerpSpeed = 2f;
+
+    [Header("Tank")]
+    [SerializeField] private TankSpawner tanksSpawner;
+    [SerializeField] private TankSpawnPoint[] spawnPoint;
 
     private bool gameFinished;
 
-    public float WaterFlowDuration => waterFlowDuration;
-    public float PipeFillSpeed => pipeFillSpeed;
+    public float PipeLerpSpeed => pipeLerpSpeed;
 
     private void Awake()
     {
@@ -40,6 +43,12 @@ public class GameManager : MonoBehaviour
     {
         gameFinished = false;
 
+        startNode = GetRandomStartNode();
+
+        Debug.Log($"Start Node Random : {startNode.NodeID}");
+
+        PositionTank(startNode);
+
         int optimalWeight = primAlgorithm.CalculateOptimalWeight(startNode);
 
         waterTank.Initialize(optimalWeight);
@@ -59,11 +68,55 @@ public class GameManager : MonoBehaviour
 
         Edge edge = valve.Edge;
 
+        // Exploration rules: allow opening if edge hasn't water and owner node is active
+        if (edge.HasWater)
+        {
+            Debug.Log("Edge telah di aliri air");
+            return;
+        }
+
+        if (valve.OwnerNode == null)
+        {
+            Debug.LogError("Valve OwnerNode is null");
+            return;
+        }
+
+        if (!valve.OwnerNode.IsActive)
+        {
+            Debug.Log("Node ini belum dialiri air");
+            return;
+        }
+
         Debug.Log("----------------------------------");
         Debug.Log($"Valve : {edge.NodeA.NodeID} -> {edge.NodeB.NodeID}");
         Debug.Log($"Weight : {edge.Weight}");
+        Debug.Log($"[GameManager] Edge.NodeA(ID:{edge.NodeA.NodeID}).IsVisited = {edge.NodeA.IsVisited}");
+        Debug.Log($"[GameManager] Edge.NodeB(ID:{edge.NodeB.NodeID}).IsVisited = {edge.NodeB.IsVisited}");
 
-        // Air tidak cukup
+        // Evaluate selection for Prim scoring, but do not block gameplay
+        PrimResult result = primAlgorithm.EvaluateSelection(edge);
+
+        switch (result)
+        {
+            case PrimResult.Success:
+                Debug.Log("Prim: Correct selection");
+                break;
+            case PrimResult.WrongEdge:
+                Debug.Log("Prim: Wrong selection (but exploration allowed)");
+                break;
+            case PrimResult.InvalidCandidate:
+                Debug.Log("Prim: InvalidCandidate (exploration allowed)");
+                break;
+            case PrimResult.AlreadySelected:
+                Debug.Log("Prim: AlreadySelected");
+                // If already selected, do not re-flow or consume water
+                return;
+            case PrimResult.Finished:
+                Debug.Log("Prim: Finished");
+                break;
+        }
+
+        // Common exploration behavior: consume water and flow if enough water
         if (!waterTank.CanUseWater(edge.Weight))
         {
             Debug.Log("Air tidak cukup!");
@@ -71,51 +124,13 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        // Kurangi air
         waterTank.UseWater(edge.Weight);
 
-        // Cek hasil Prim
-        PrimResult result = primAlgorithm.TrySelectEdge(edge);
+        edge.FlowWater(valve.OwnerNode);
 
-        switch (result)
-        {
-            case PrimResult.Success:
-
-                Debug.Log("Edge BENAR");
-
-                edge.FlowWater();
-
-                if (primAlgorithm.IsFinished())
-                    Win();
-
-                break;
-
-            case PrimResult.WrongEdge:
-
-                Debug.Log("Edge SALAH");
-
-                edge.FlowWater();
-
-                break;
-
-            case PrimResult.InvalidCandidate:
-
-                Debug.Log("Edge bukan Candidate");
-
-                break;
-
-            case PrimResult.AlreadySelected:
-
-                Debug.Log("Edge sudah dipilih");
-
-                break;
-
-            case PrimResult.Finished:
-
-                Win();
-
-                break;
-        }
+        // If Prim finished as a result of EvaluateSelection, check win
+        if (primAlgorithm.IsFinished())
+            Win();
     }
 
     private void Win()
@@ -142,5 +157,26 @@ public class GameManager : MonoBehaviour
         Debug.Log("GAME OVER");
         Debug.Log("Air Habis");
         Debug.Log("==================================");
+    }
+
+    private Node GetRandomStartNode()
+    {
+        int randomIndex = Random.Range(0, graph.Nodes.Count);
+        return graph.Nodes[randomIndex];
+    }
+
+    private void PositionTank (Node startNode)
+    {
+        foreach (TankSpawnPoint point in spawnPoint)
+        {
+            if (point.Node == startNode)
+            {
+                tanksSpawner.transform.SetPositionAndRotation(
+                    point.transform.position,
+                    point.transform.rotation);
+
+                return;
+            }
+        }
     }
 }

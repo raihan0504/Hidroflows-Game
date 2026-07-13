@@ -42,6 +42,19 @@ public class Valve : MonoBehaviour
             return;
         }
 
+        if (ownerNode == null)
+        {
+            Debug.LogError("OwnerNode belum di-assign pada Valve");
+            return;
+        }
+
+        // Verify the owner node belongs to the assigned edge
+        if (ownerNode != edge.NodeA && ownerNode != edge.NodeB)
+        {
+            Debug.LogError("OwnerNode does not belong to the assigned Edge on this Valve.");
+            return;
+        }
+
         if (!ownerNode.IsActive)
         {
             Debug.Log("Node ini belum dialiri air");
@@ -62,4 +75,10 @@ public class Valve : MonoBehaviour
 
         GameManager.Instance.OnValveOpened(this);
     }
+}
+
+public enum FlowDirection
+{
+    NodeAToNodeB,
+    NodeBToNodeA
 }

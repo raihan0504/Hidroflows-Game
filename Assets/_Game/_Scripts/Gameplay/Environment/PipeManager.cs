@@ -3,13 +3,13 @@ using UnityEngine;
 
 public class PipeManager : MonoBehaviour
 {
-    [SerializeField] List<PipeVisual> pipes;
+    [SerializeField] private List<PipeVisual> pipes;
 
     private void Start()
     {
         foreach (PipeVisual pipe in pipes)
         {
-            pipe.SetFill(0f);
+            pipe.ResetPipe();
         }
     }
 
@@ -18,6 +18,6 @@ public class PipeManager : MonoBehaviour
         if (index < 0 || index >= pipes.Count)
             return;
 
-        pipes[index].SetFill(1f);
+        pipes[index].FillPipe();
     }
 }

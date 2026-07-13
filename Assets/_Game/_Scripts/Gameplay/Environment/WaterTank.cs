@@ -6,16 +6,24 @@ public class WaterTank : MonoBehaviour
     [Header("Water")]
     [SerializeField] private int maxWater;
 
+    [Header("Visual")]
+    [SerializeField] private TankVisual tankVisual;
+
     public int MaxWater => maxWater;
     public int CurrentWater { get; private set; }
 
     public UnityEvent<int, int> OnWaterChanged;
     public UnityEvent OnWaterEmpty;
 
+    /// <summary>
+    /// Mengisi tangki berdasarkan total bobot MST.
+    /// </summary>
     public void Initialize(int amount)
     {
         maxWater = amount;
         CurrentWater = amount;
+
+        UpdateVisual();
 
         OnWaterChanged?.Invoke(CurrentWater, MaxWater);
 
@@ -23,7 +31,7 @@ public class WaterTank : MonoBehaviour
     }
 
     /// <summary>
-    /// Mengecek apakah air masih cukup.
+    /// Mengecek apakah air masih cukup digunakan.
     /// </summary>
     public bool CanUseWater(int amount)
     {
@@ -31,7 +39,7 @@ public class WaterTank : MonoBehaviour
     }
 
     /// <summary>
-    /// Mengurangi air.
+    /// Mengurangi air berdasarkan bobot edge.
     /// </summary>
     public void UseWater(int amount)
     {
@@ -40,24 +48,52 @@ public class WaterTank : MonoBehaviour
         if (CurrentWater < 0)
             CurrentWater = 0;
 
+        UpdateVisual();
+
         Debug.Log($"Menggunakan {amount} Liter");
         Debug.Log($"Sisa Air : {CurrentWater}/{MaxWater}");
 
         OnWaterChanged?.Invoke(CurrentWater, MaxWater);
 
         if (CurrentWater == 0)
+        {
+            Debug.Log("Air Habis");
             OnWaterEmpty?.Invoke();
+        }
     }
 
+    /// <summary>
+    /// Mengisi ulang tangki.
+    /// </summary>
+    public void Refill()
+    {
+        CurrentWater = MaxWater;
+
+        UpdateVisual();
+
+        OnWaterChanged?.Invoke(CurrentWater, MaxWater);
+    }
+
+    /// <summary>
+    /// Mengecek apakah air habis.
+    /// </summary>
     public bool IsEmpty()
     {
         return CurrentWater <= 0;
     }
 
-    public void Refill()
+    /// <summary>
+    /// Mengupdate visual isi air pada tangki.
+    /// </summary>
+    private void UpdateVisual()
     {
-        CurrentWater = MaxWater;
+        if (tankVisual == null)
+            return;
 
-        OnWaterChanged?.Invoke(CurrentWater, MaxWater);
+        float fill = MaxWater == 0
+            ? 0f
+            : (float)CurrentWater / MaxWater;
+
+        tankVisual.SetFill(fill);
     }
 }

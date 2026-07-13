@@ -4,69 +4,77 @@ using UnityEngine;
 [RequireComponent(typeof(Renderer))]
 public class PipeVisual : MonoBehaviour
 {
+    private static readonly int FillID = Shader.PropertyToID("_Fill");
+    private static readonly int DirectionID = Shader.PropertyToID("_Direction");
+
     private Renderer rend;
     private MaterialPropertyBlock propertyBlock;
-
-    private static readonly int FillID = Shader.PropertyToID("_Fill");
-
-    private Coroutine fillCoroutine;
+    private Coroutine fillRoutine;
 
     private void Awake()
     {
         rend = GetComponent<Renderer>();
         propertyBlock = new MaterialPropertyBlock();
+
+        ResetPipe();
     }
 
-    /// <summary>
-    /// Mengubah nilai Fill pada shader.
-    /// </summary>
-    public void SetFill(float fill)
-    {
-        rend.GetPropertyBlock(propertyBlock);
-        propertyBlock.SetFloat(FillID, Mathf.Clamp01(fill));
-        rend.SetPropertyBlock(propertyBlock);
-    }
-
-    /// <summary>
-    /// Memulai animasi pengisian air.
-    /// </summary>
     public void FillPipe()
     {
-        if (fillCoroutine != null)
-            StopCoroutine(fillCoroutine);
+        if (fillRoutine != null)
+            StopCoroutine(fillRoutine);
 
-        fillCoroutine = StartCoroutine(FillRoutine());
+        fillRoutine = StartCoroutine(FillRoutine());
+    }
+
+    public void ResetPipe()
+    {
+        SetFill(0f);
     }
 
     private IEnumerator FillRoutine()
     {
-        float fill = 0f;
+        float currentFill = GetCurrentFill();
+        float targetFill = 1f;
 
-        while (fill < 1f)
+        while (Mathf.Abs(currentFill - targetFill) > 0.001f)
         {
-            fill += GameManager.Instance.PipeFillSpeed * Time.deltaTime;
+            currentFill = Mathf.Lerp(
+                currentFill,
+                targetFill,
+                GameManager.Instance.PipeLerpSpeed * Time.deltaTime);
 
-            SetFill(fill);
+            SetFill(currentFill);
 
             yield return null;
         }
 
-        SetFill(1f);
+        SetFill(targetFill);
 
-        fillCoroutine = null;
+        fillRoutine = null;
     }
 
-    /// <summary>
-    /// Mengosongkan kembali pipa.
-    /// </summary>
-    public void ResetPipe()
+    private void SetFill(float value)
     {
-        if (fillCoroutine != null)
-        {
-            StopCoroutine(fillCoroutine);
-            fillCoroutine = null;
-        }
+        rend.GetPropertyBlock(propertyBlock);
+        propertyBlock.SetFloat(FillID, value);
+        rend.SetPropertyBlock(propertyBlock);
+    }
 
-        SetFill(0f);
+    private float GetCurrentFill()
+    {
+        rend.GetPropertyBlock(propertyBlock);
+        return propertyBlock.GetFloat(FillID);
+    }
+
+    public void SetDirection (float direction)
+    {
+        Debug.Log($"Direction = {direction}");
+
+        rend.GetPropertyBlock(propertyBlock);
+
+        propertyBlock.SetFloat(DirectionID, direction);
+
+        rend.SetPropertyBlock(propertyBlock);
     }
 }

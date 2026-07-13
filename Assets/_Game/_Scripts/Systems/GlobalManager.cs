@@ -20,6 +20,7 @@ public class GlobalManager : MonoBehaviour
 
     private void Awake()
     {
+        Application.targetFrameRate = -1;
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
