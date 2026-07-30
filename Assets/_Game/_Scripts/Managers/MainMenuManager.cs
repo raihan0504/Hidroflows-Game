@@ -1,17 +1,29 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class MainMenuManager : MonoBehaviour
 {
     [Header("Panels")]
-    [SerializeField] GameObject startPanel;
+    [SerializeField] GameObject selectLevel;
     [SerializeField] GameObject settingPanel;
     [SerializeField] GameObject aboutUsPanel;
+    [SerializeField] GameObject mainMenuPanel;
+
+
+    private void Start()
+    {
+        selectLevel.SetActive(false);
+        settingPanel.SetActive(false);
+        aboutUsPanel.SetActive(false);
+        mainMenuPanel.SetActive(true);
+    }
 
     // Button Start Game
     #region Start Game
-    public void OpenStartPanel()
+    public void OpenPanelLevel()
     {
-        startPanel.SetActive(true);
+        selectLevel.SetActive(true);
+        mainMenuPanel.SetActive(false); 
     }
 
     public void StartGame()

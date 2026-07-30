@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class GameManager : MonoBehaviour
 {
@@ -10,7 +11,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Graph graph;
 
     [Header("Level")]
+    [SerializeField] LevelManager levelManager;
     [SerializeField] private Node startNode;
+
+    [Header("Level Timer")]
+    [SerializeField] private float levelTime = 180f;
+
+    private float currentTime;
 
     [Header("Visual")]
     [SerializeField] private float pipeLerpSpeed = 2f;
@@ -20,6 +27,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TankSpawnPoint[] spawnPoint;
 
     private bool gameFinished;
+
+    public GameState CurrentState { get; private set; } = GameState.Loading;
 
     public float PipeLerpSpeed => pipeLerpSpeed;
 
@@ -41,6 +50,9 @@ public class GameManager : MonoBehaviour
 
     public void StartLevel()
     {
+        // Loading -> initialize -> Playing
+        ChangeState(GameState.Loading);
+
         gameFinished = false;
 
         startNode = GetRandomStartNode();
@@ -54,16 +66,46 @@ public class GameManager : MonoBehaviour
         waterTank.Initialize(optimalWeight);
         primAlgorithm.Initialize(startNode);
 
+        // GameManager will handle win/lose ordering itself after applying an edge.
+        // Do not subscribe to WaterTank.OnWaterEmpty here to avoid race where OnWaterEmpty
+        // fires before we can check Prim win condition. The GameManager will check
+        // waterTank.IsEmpty() after flow and prim evaluation.
+
         Debug.Log("==================================");
         Debug.Log("LEVEL DIMULAI");
         Debug.Log($"Start Node : {startNode.NodeID}");
         Debug.Log($"Total Air : {optimalWeight}");
         Debug.Log("==================================");
+
+        // initialize timer
+        currentTime = levelTime;
+
+        ChangeState(GameState.Playing);
     }
+
+    private void Update()
+    {
+        // Only count down while playing and the game hasn't finished
+        if (CurrentState == GameState.Playing && !gameFinished)
+        {
+            currentTime -= Time.deltaTime;
+            if (currentTime < 0f) currentTime = 0f;
+
+            if (currentTime <= 0f)
+            {
+                // time expired -> game over if not already finished
+                if (!gameFinished)
+                    GameOver();
+            }
+        }
+    }
+
+    public float CurrentTime => currentTime;
 
     public void OnValveOpened(Valve valve)
     {
-        if (gameFinished)
+        // Only allow valve interaction while playing
+        if (CurrentState != GameState.Playing)
             return;
 
         Edge edge = valve.Edge;
@@ -128,9 +170,20 @@ public class GameManager : MonoBehaviour
 
         edge.FlowWater(valve.OwnerNode);
 
-        // If Prim finished as a result of EvaluateSelection, check win
+        // After applying the flow, prioritize win check before checking empty water.
         if (primAlgorithm.IsFinished())
+        {
+            // Player completed MST ? win even if water is exactly zero
             Win();
+            return;
+        }
+
+        // If MST not complete and water is empty after consumption, it's game over
+        if (waterTank.IsEmpty())
+        {
+            GameOver();
+            return;
+        }
     }
 
     private void Win()
@@ -139,6 +192,9 @@ public class GameManager : MonoBehaviour
             return;
 
         gameFinished = true;
+
+        levelManager.CompleteLevel();
+        ChangeState(GameState.Win);
 
         Debug.Log("==================================");
         Debug.Log("PLAYER MENANG");
@@ -153,10 +209,18 @@ public class GameManager : MonoBehaviour
 
         gameFinished = true;
 
+        ChangeState(GameState.Lose);
+
         Debug.Log("==================================");
         Debug.Log("GAME OVER");
         Debug.Log("Air Habis");
         Debug.Log("==================================");
+    }
+
+    public void ChangeState(GameState newState)
+    {
+        CurrentState = newState;
+        Debug.Log($"GameState changed to: {newState}");
     }
 
     private Node GetRandomStartNode()

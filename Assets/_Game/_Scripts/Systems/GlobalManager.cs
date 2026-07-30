@@ -7,6 +7,7 @@ using UnityEngine.UI;
 public class GlobalManager : MonoBehaviour
 {
     public static GlobalManager Instance;
+    private static readonly WaitForSeconds _waitForSeconds = new (0.2f);
 
     [Header("Loading UI")]
     [SerializeField] private GameObject loadingScreen;
@@ -32,6 +33,8 @@ public class GlobalManager : MonoBehaviour
 
         SceneManager.LoadSceneAsync((int)SceneIndex.MAINMENU, LoadSceneMode.Additive);
         currentScene = (int)SceneIndex.MAINMENU;
+
+        Screen.sleepTimeout = SleepTimeout.NeverSleep;
     }
 
     public void LoadGame()
@@ -41,7 +44,10 @@ public class GlobalManager : MonoBehaviour
 
     public void LoadLevel(int levelIndex)
     {
-        StartCoroutine(LoadSceneAsync(levelIndex));
+        Time.timeScale = 1f;
+
+        int buildIndex = (int)SceneIndex.LEVEL1 + (levelIndex - 1);
+        StartCoroutine(LoadSceneAsync(buildIndex));
     }
 
     public void RestartCurrentLevel()
@@ -54,6 +60,7 @@ public class GlobalManager : MonoBehaviour
 
     public void BackToMenu()
     {
+        Time.timeScale = 1f;
         StartCoroutine(LoadSceneAsync((int)SceneIndex.MAINMENU));
     }
 
@@ -123,7 +130,7 @@ public class GlobalManager : MonoBehaviour
                     yield return null;
                 }
 
-                yield return new WaitForSeconds(0.2f);
+                yield return _waitForSeconds;
 
                 loadOp.allowSceneActivation = true;
             }

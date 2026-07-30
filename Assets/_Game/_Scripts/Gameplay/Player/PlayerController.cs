@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
@@ -32,10 +34,29 @@ public class PlayerController : MonoBehaviour
     private string currentState;
     private bool _isJumpingPipe;
     private Interact _targetInteract;
+    private bool _touchBeganOverUI = false;
+    private bool _mousePressedOverUI = false;
 
     private void Awake()
     {
         _controller = GetComponent<CharacterController>();
+    }
+
+    // Helper: perform a UI raycast at screen position to detect if over any UI element
+    private bool IsPointerOverUI(Vector2 screenPosition)
+    {
+        if (EventSystem.current == null)
+            return false;
+
+        PointerEventData eventData = new PointerEventData(EventSystem.current)
+        {
+            position = screenPosition
+        };
+
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        return results.Count > 0;
     }
 
     private void Update()
@@ -102,13 +123,129 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // Draw gizmos to visualize pipe check ray and distance in the editor
+    private void OnDrawGizmosSelected()
+    {
+        // avoid errors when not playing
+        Vector3 origin = transform.position + Vector3.up * 0.3f;
+
+        Vector3 dir = Vector3.forward;
+        if (Application.isPlaying)
+        {
+            dir = _moveDirection.sqrMagnitude > 0.01f ? _moveDirection.normalized : transform.forward;
+        }
+        else
+        {
+            dir = transform.forward;
+        }
+
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(origin, origin + dir * pipeCheckDistance);
+        Gizmos.DrawWireSphere(origin + dir * pipeCheckDistance, 0.12f);
+    }
+
     private void HandleTouchMovement()
     {
+        // Mobile touch support (Touch & Go). Desktop mouse behavior remains unchanged.
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+
+            // Track whether this touch began over UI so we can ignore the whole touch sequence
+            if (touch.phase == TouchPhase.Began)
+            {
+                if (EventSystem.current != null)
+                    _touchBeganOverUI = EventSystem.current.IsPointerOverGameObject(touch.fingerId);
+                else
+                    _touchBeganOverUI = false;
+            }
+
+            // If this touch sequence began over UI, ignore until it ends
+            if (_touchBeganOverUI)
+            {
+                if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+                    _touchBeganOverUI = false;
+
+                return;
+            }
+
+            Ray ray = mainCamera.ScreenPointToRay(touch.position);
+            // If the touch position is over UI, ignore it to prevent UI clicks from moving the player
+            if (IsPointerOverUI(touch.position))
+            {
+                return;
+            }
+
+            if (!Physics.Raycast(ray, out RaycastHit hit))
+                return;
+
+            Interact interact = hit.collider.GetComponent<Interact>();
+
+            if (touch.phase == TouchPhase.Began)
+            {
+                // Interaction priority: if touching an interactable, set it as the interaction target
+                // Do NOT trigger interaction immediately; player will auto-walk to it.
+                if (interact != null)
+                {
+                    _targetInteract = interact;
+                    _targetPosition = interact.transform.position;
+                    _hasTarget = true;
+
+                    clickIndicator.position = interact.transform.position;
+                    clickIndicator.gameObject.SetActive(true);
+                    return;
+                }
+
+                // Tapped on ground: cancel any pending interaction and set destination once
+                _targetInteract = null;
+                _targetPosition = hit.point;
+                _hasTarget = true;
+
+                clickIndicator.position = hit.point;
+                clickIndicator.gameObject.SetActive(true);
+            }
+            else if (touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary)
+            {
+                // While holding or dragging, continuously update destination (follow finger)
+                if (interact == null)
+                {
+                    // dragging on ground: cancel any pending interaction
+                    _targetInteract = null;
+
+                    _targetPosition = hit.point;
+                    _hasTarget = true;
+
+                    clickIndicator.position = hit.point;
+                    if (!clickIndicator.gameObject.activeSelf)
+                        clickIndicator.gameObject.SetActive(true);
+                }
+                else
+                {
+                    // dragging over an interactable: update target to that interactable so player follows it
+                    _targetInteract = interact;
+                    _targetPosition = interact.transform.position;
+                    _hasTarget = true;
+
+                    clickIndicator.position = interact.transform.position;
+                    if (!clickIndicator.gameObject.activeSelf)
+                        clickIndicator.gameObject.SetActive(true);
+                }
+            }
+            else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+            {
+                // On release: keep last destination so character continues to it
+            }
+
+            return;
+        }
+
+        // Desktop / Mouse behavior - unchanged
         if (Input.GetMouseButtonDown(0))
         {
-            if (EventSystem.current != null &&
-                EventSystem.current.IsPointerOverGameObject())
+            // detect if mouse press began over UI and remember until release
+            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             {
+                _mousePressedOverUI = true;
                 Debug.Log("Touch UI");
                 return;
             }
@@ -137,6 +274,12 @@ public class PlayerController : MonoBehaviour
                 clickIndicator.position = hit.point;
                 clickIndicator.gameObject.SetActive(true);
             }
+
+        // Reset mouse UI flag on release
+        if (Input.GetMouseButtonUp(0))
+        {
+            _mousePressedOverUI = false;
+        }
         }
     }
 
@@ -161,6 +304,32 @@ public class PlayerController : MonoBehaviour
                 _targetPosition - transform.position;
 
             direction.y = 0f;
+
+            // If we have a pending interactable target, check distance and auto-interact when in range
+            if (_targetInteract != null)
+            {
+                float distanceToInteract = Vector3.Distance(transform.position, _targetInteract.transform.position);
+
+                if (distanceToInteract <= interactDistance)
+                {
+                    // Stop and interact
+                    _targetInteract.CallInteract(this);
+
+                    _targetInteract = null;
+                    _hasTarget = false;
+                    _moveDirection = Vector3.zero;
+
+                    clickIndicator.gameObject.SetActive(false);
+                    return;
+                }
+                else
+                {
+                    // update movement towards the interactable's current position
+                    _targetPosition = _targetInteract.transform.position;
+                    direction = _targetPosition - transform.position;
+                    direction.y = 0f;
+                }
+            }
 
             if (_targetInteract != null)
             {
@@ -196,8 +365,8 @@ public class PlayerController : MonoBehaviour
 
         _controller.Move(
             _moveDirection *
-            moveSpeed *
-            Time.deltaTime);
+            (moveSpeed *
+            Time.deltaTime));
     }
 
     private void CheckPipeAhead()
@@ -289,4 +458,5 @@ public class PlayerController : MonoBehaviour
             }
         }
     }
+
 }
