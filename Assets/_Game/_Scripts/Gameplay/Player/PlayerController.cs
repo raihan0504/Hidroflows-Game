@@ -179,6 +179,9 @@ public class PlayerController : MonoBehaviour
             if (!Physics.Raycast(ray, out RaycastHit hit))
                 return;
 
+            if (hit.collider.CompareTag("Player"))
+                return;
+
             Interact interact = hit.collider.GetComponent<Interact>();
 
             if (touch.phase == TouchPhase.Began)
@@ -240,46 +243,49 @@ public class PlayerController : MonoBehaviour
         }
 
         // Desktop / Mouse behavior - unchanged
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButton(0))
         {
-            // detect if mouse press began over UI and remember until release
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            if (Input.GetMouseButtonDown(0))
             {
-                _mousePressedOverUI = true;
-                Debug.Log("Touch UI");
-                return;
+                if (EventSystem.current != null)
+                    _mousePressedOverUI = EventSystem.current.IsPointerOverGameObject();
+
+                if (_mousePressedOverUI)
+                    return;
             }
+
+            if (_mousePressedOverUI)
+                return;
 
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
-            if (Physics.Raycast(ray, out RaycastHit hit))
+            if (!Physics.Raycast(ray, out RaycastHit hit))
+                return;
+
+            Interact interact = hit.collider.GetComponent<Interact>();
+
+            if (interact != null)
             {
-                Interact interact = hit.collider.GetComponent<Interact>();
-                
-                if (interact != null)
-                {
-                    _targetInteract = interact;
-                    _targetPosition = interact.transform.position;
-                    _hasTarget = true;
-
-                    clickIndicator.position = interact.transform.position;
-                    clickIndicator.gameObject.SetActive(true);
-
-                    return;
-                }
-
+                _targetInteract = interact;
+                _targetPosition = interact.transform.position;
+            }
+            else
+            {
+                _targetInteract = null;
                 _targetPosition = hit.point;
-                _hasTarget = true;
-
-                clickIndicator.position = hit.point;
-                clickIndicator.gameObject.SetActive(true);
             }
 
-        // Reset mouse UI flag on release
+            _hasTarget = true;
+
+            clickIndicator.position = _targetPosition;
+
+            if (!clickIndicator.gameObject.activeSelf)
+                clickIndicator.gameObject.SetActive(true);
+        }
+
         if (Input.GetMouseButtonUp(0))
         {
             _mousePressedOverUI = false;
-        }
         }
     }
 

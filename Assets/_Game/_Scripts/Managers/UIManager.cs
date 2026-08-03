@@ -2,10 +2,17 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.SceneManagement;
+using Unity.VisualScripting;
+using System.Collections;
 
 public class UIManager : MonoBehaviour
 {
     [SerializeField] GameObject pausePanel;
+
+    [Space(5)]
+    [Header("Panel delayed activation")]
+    [SerializeField] float winResultDelay = 1.5f;
+    [SerializeField] float loseResultDelay = 1.5f;
 
     [Header("Win Panel")]
     [SerializeField] private GameObject winPanel;
@@ -15,8 +22,9 @@ public class UIManager : MonoBehaviour
     [Header("HUD")]
     [SerializeField] private TMP_Text countdownText;
 
+    private WaitForSeconds _waitDelay;
+    private WaitForSeconds _waitLoseDelay;
     private GameState prevState = GameState.Loading;
-
     private bool isPause = false;
 
     void Update()
@@ -34,12 +42,12 @@ public class UIManager : MonoBehaviour
             {
                 if (s == GameState.Win)
                 {
-                    ShowWinPanel();
+                    StartCoroutine(ShowWinAfterDelay());
                 }
 
                 if (s == GameState.Lose)
                 {
-                    ShowGameOverPanel();
+                    StartCoroutine(ShowLoseAfterDelay());
                 }
 
                 prevState = s;
@@ -66,6 +74,8 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        _waitDelay = new WaitForSeconds(winResultDelay);
+        _waitLoseDelay = new WaitForSeconds(loseResultDelay);
 
         // Ensure win panel is hidden at start
         if (winPanel != null)
@@ -109,5 +119,17 @@ public class UIManager : MonoBehaviour
 
         if (restartButton != null)
             restartButton.interactable = true;
+    }
+
+    IEnumerator ShowWinAfterDelay()
+    {
+        yield return _waitDelay;
+        ShowWinPanel();
+    }
+
+    IEnumerator ShowLoseAfterDelay()
+    {
+        yield return _waitLoseDelay;
+        ShowGameOverPanel();
     }
 }

@@ -3,7 +3,11 @@ using UnityEngine;
 
 public class Node : MonoBehaviour
 {
+    [Header("Node")]
     [SerializeField] private int nodeID;
+
+    [Header("Plant")]
+    [SerializeField] private Sawi sawi;
 
     private readonly List<Edge> connectedEdges = new();
 
@@ -25,6 +29,9 @@ public class Node : MonoBehaviour
     public void Activate()
     {
         IsActive = true;
+
+        if (sawi != null)
+            sawi.PlayGrowAnimation();
     }
 
     public void Deactivate()

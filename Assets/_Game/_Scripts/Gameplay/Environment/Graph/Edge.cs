@@ -12,6 +12,10 @@ public class Edge : MonoBehaviour
     [Header("Pipe Visual")]
     [SerializeField] private PipeVisual pipeVisual;
 
+    [Header("Valve")]
+    [SerializeField] private Valve valveA;
+    [SerializeField] private Valve valveB;
+
     public Node NodeA => nodeA;
     public Node NodeB => nodeB;
     public int Weight => weight;
@@ -45,6 +49,9 @@ public class Edge : MonoBehaviour
 
         // Use the explicit owner node to determine flow direction instead of inferring
         Node fromNode = ownerNode;
+
+        valveA.OpenValveAnimation();
+        valveB.OpenValveAnimation();
 
         pipeVisual.SetDirection(fromNode == nodeA ? 0 : 1);
 

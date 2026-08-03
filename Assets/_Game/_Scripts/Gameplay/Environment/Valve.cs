@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Interact))]
 public class Valve : MonoBehaviour
 {
@@ -7,6 +8,8 @@ public class Valve : MonoBehaviour
     [SerializeField] private Node ownerNode;
 
     private Interact interact;
+    private Animator _anim;
+    private int openValveHash;
 
     public Edge Edge => edge;
     public Node OwnerNode => ownerNode;
@@ -14,6 +17,12 @@ public class Valve : MonoBehaviour
     private void Awake()
     {
         interact = GetComponent<Interact>();
+        _anim = GetComponent<Animator>();
+    }
+
+    private void Start()
+    {
+        openValveHash = Animator.StringToHash("ValveTrigger");
     }
 
     private void OnEnable()
@@ -29,7 +38,7 @@ public class Valve : MonoBehaviour
     private void OpenValve()
     {
         Debug.Log("OpenValve");
-
+  
         if (GameManager.Instance == null)
         {
             Debug.LogError("GameManager Instance NULL");
@@ -73,7 +82,13 @@ public class Valve : MonoBehaviour
             return;
         }
 
+        OpenValveAnimation();
         GameManager.Instance.OnValveOpened(this);
+    }
+
+    public void OpenValveAnimation()
+    {
+        _anim.SetTrigger(openValveHash);
     }
 }
 
